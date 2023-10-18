@@ -49,6 +49,7 @@ Descripcion:
     nodo ya esté contenido en el árbol.
 */
 void agregarNodo(short numero){
+
 };
 
 /*
@@ -101,3 +102,18 @@ Descripcion:
 */
 void detenerPrograma(){
 };
+
+int main(){
+
+    //Arreglo que tengo que llenar con los datos
+    short memoria[AREA_MEMORIA];
+    
+    //inicializo la memoria con 0x8000
+    for(int i = 0; i < AREA_MEMORIA; i++){
+        memoria[i] = 0x8000;
+    }
+    
+    
+
+    return 0;
+}
