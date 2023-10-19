@@ -1,3 +1,6 @@
+#include <stdlib.h>
+#include <stdbool.h>
+
 #define PUERTO_ENTRADA 20
 #define PUERTO_SALIDA 21
 #define PUERTO_LOG 22
@@ -29,27 +32,64 @@ Los siguientes operadores de C le pueden resultar útiles:
     ◦ Las variables short se compilan a 16 bits
 */
 
-/*
-Descripcion:
-- Cambiar Modo:     
-  - Cambia el modo de almacenamiento del árbol e inicializa el área de memoria.
-  - Indica el modo de almacenamiento del árbol. Si el parámetro es 0, el almacenamiento será
-    estático, mientras que si el parámetro es 1, será dinámico. Despliega error en caso de recibir un
-    parámetro inválido. Además, inicializa el área de memoria.
-*/
-void cambiarModo(short modo){
+void agregarNodoEstatico(short numero,short (*memoria)[AREA_MEMORIA], short *tope){
+        if((*memoria)[0]=0x8000){
+            tope = 1;
+            (*memoria)[0]=numero;
+        } else {
+          //Si no esta vacio, lo busco
+          short posActual=0;
+
+          //Lo busco
+          while((*memoria)[posActual]!=0x8000){
+            //Si el numero es menor a la raiz
+            if((*memoria)[posActual] > numero){ 
+                posActual = posActual*2+1;
+            } else {
+                posActual = posActual*2+2;
+            }
+          }
+          //Cuando llego a un nodo vacio, lo agrego
+          (*memoria)[posActual]=numero;
+          if (tope < posActual){
+            tope = posActual + 1;
+          }
+        }    
 };
 
-/*
-Descripcion:
-- Agregar Nodo:     
-  - Agrega el número al árbol. El número es un número de 16 bits en complemento a 2.
-  - Agrega el parámetro Num al árbol. Imprime error en el PUERTO_LOG en caso de intentar
-    escribir fuera del AREA_DE_MEMORIA. Imprime error en el PUERTO_LOG en caso de que el
-    nodo ya esté contenido en el árbol.
-*/
-void agregarNodo(short numero){
+void agregarNodoDinamico(short numero,short (*memoria)[AREA_MEMORIA], short *tope){
+  //Si el modo es dinamico
+        //Si el arbol esta vacio
+        if((*memoria)[0]=0x8000){
+            tope = 1;
+            (*memoria)[0]=numero;
+        } else {
+          //Si no esta vacio, lo busco
+          short posActual=0;
+          short aux= 0;
+          //Lo busco
+          while((*memoria)[aux] != 0x8000){
+            //Si el numero es menor a la raiz
+            if((*memoria)[aux]=(*memoria)[posActual]){
+              if((*memoria)[posActual] > numero){ 
+                aux = aux + 1;
+              } else {
+                  aux = aux + 2;
+              }
+            }
+            posActual = posActual + 3;
+          }
 
+          //Lo agrego en la rama del arbol que necesite
+          (*memoria)[aux]= numero;
+
+          //Busco el ultimo nodo y lo agrego ahi
+          while((*memoria)[posActual]!=0x8000){
+            posActual = posActual + 3;
+          }
+          (*memoria)[posActual]=numero;
+          tope = posActual + 1;
+        }
 };
 
 /*
@@ -58,8 +98,10 @@ Descripcion:
   - Imprime la altura del árbol.
   - Imprime la altura del árbol en el puerto de entrada/salida PUERTO_SALIDA.
 */
-short calcularAltura(){
-    return 0;
+short calcularAltura(short inicio, short fin, short (*memoria)[AREA_MEMORIA]){
+    if(inicio = fin){
+      return 1;
+    }
 };
 
 /*
@@ -95,13 +137,20 @@ Descripcion:
 void imprimirMemoria(short n){
 };
 
-/*
-Descripcion:
-- Detener programa: 
-  - Detiene la ejecución del programa    
-*/
-void detenerPrograma(){
-};
+//Menu principal
+int menuPrincipal(){
+    int opcion = 0;
+    printf("Ingrese una opcion:\n");
+    printf("1. Cambiar Modo\n");
+    printf("2. Agregar Nodo\n");
+    printf("3. Calcular Altura\n");
+    printf("4. Calcular Suma\n");
+    printf("5. Imprimir Arbol\n");
+    printf("6. Imprimir Memoria\n");
+    printf("255. Detener Programa\n");
+    scanf("%d", &opcion);
+    return opcion;
+}
 
 int main(){
 
@@ -113,7 +162,71 @@ int main(){
         memoria[i] = 0x8000;
     }
     
-    
+    //inicializo en modo estatico
+    // modo = 0 --> estatico
+    // modo = 1 --> dinamico
+    short modo = 0x0000;
 
+    short tope=0x0000;
+
+    bool salir = true;
+
+    while(salir){
+      int opcion= menuPrincipal();
+      switch (opcion){
+      case 1:{
+        printf("Modo estatico -> 0 || Modo dinamico -> 1\n");
+        printf("Ingrese el modo: ");
+        scanf("%hd", &modo);
+        for(int i = 0; i < AREA_MEMORIA; i++){
+        memoria[i] = 0x8000;
+        }
+        break;
+      };
+      case 2:{
+        short numero;
+        printf("Ingrese el numero: ");
+        scanf("%hd", &numero);
+        if(modo = 0){
+          agregarNodoEstatico(numero, &memoria, &tope);
+        } else {
+          agregarNodoDinamico(numero, &memoria, &tope);
+        }
+        break;
+      };
+      case 3:{
+        short altura = calcularAltura(0,tope,&memoria);
+        printf("La altura del arbol es: %hd\n", altura);
+        break;
+      };
+      case 4:{
+        short suma = calcularSuma();
+        printf("La suma de los nodos del arbol es: %hd\n", suma);
+        break;
+      };
+      case 5:{
+        short orden;
+        printf("De menor a mayor -> 0 || De mayor a menor -> 1\n");
+        printf("Ingrese el orden: ");
+        scanf("%hd", &orden);
+        imprimirArbol(orden);
+        break;
+      };
+      case 6:{
+        short n;
+        printf("Ingrese la cantidad de nodos a imprimir: ");
+        scanf("%hd", &n);
+        imprimirMemoria(n);
+        break;
+      };
+      case 255:{
+        salir = false;
+        break;
+      };
+      default:
+        printf("Opcion invalida, por favor reintentar\n");
+        break;
+      }
+    }
     return 0;
 }
