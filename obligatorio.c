@@ -6,21 +6,23 @@
 #define PUERTO_LOG 22
 #define AREA_MEMORIA 2048
 
-/*
-Operadores y datos de utilidad
-Los siguientes operadores de C le pueden resultar útiles:
-    ◦ & - And bit a bit
-    ◦ | - Or bit a bit
-    ◦ ~ - Negación bit a bit
-    ◦ ^ - Xor bit a bit
-    ◦ >> Shift right (n bits)
-    ◦ << Shift left (n bits)
-• Se puede asumir que los programas ejecutan en un contexto donde:
-    ◦ Las variables short se compilan a 16 bits
-*/
+//Funcion auxiliar
 
-void agregarNodoEstatico(short numero,short memoria[], short& tope){
-        if(memoria[0]=0x8000){
+short max(short a, short b){
+    if(a>b){
+        return a;
+    } else {
+        return b;
+    }
+}
+
+// ------------------------------------
+//          Agregar Nodo
+// ------------------------------------
+
+void agregarNodoEstatico(short numero,short memoria[AREA_MEMORIA], short& tope){
+        short nulo = 0x8000;
+        if(memoria[0] == nulo){
             tope = 0x0001;
             memoria[0]=numero;
         } else {
@@ -28,7 +30,7 @@ void agregarNodoEstatico(short numero,short memoria[], short& tope){
           short posActual=0;
 
           //Lo busco
-          while(memoria[posActual]!=0x8000){
+          while(memoria[posActual]!=nulo){
             //Si el numero es menor a la raiz
             if(memoria[posActual] > numero){ 
                 posActual = posActual*2+1;
@@ -44,48 +46,42 @@ void agregarNodoEstatico(short numero,short memoria[], short& tope){
         }    
 };
 
-void agregarNodoDinamico(short numero,short memoria[AREA_MEMORIA], short& tope){
-  //Si el modo es dinamico
+void agregarNodoDinamico(short numero,short inicio,short memoria[AREA_MEMORIA], short tope){
+        //Si el modo es dinamico
         //Si el arbol esta vacio
-        if(memoria[0]=0x8000){
-            tope = 0x0001;
-            memoria[0]=numero;
+        short nulo = 0x8000;
+        if(memoria[inicio]==nulo){
+                     
         } else {
-          //Si no esta vacio, lo busco
-          short posActual=0;
-          short aux= 0;
-          //Lo busco
-          while(memoria[aux] != 0x8000){
-            //Si el numero es menor a la raiz
-            if(memoria[aux] =memoria[posActual]){
-              if(memoria[posActual] > numero){ 
-                aux = aux + 1;
+           //Si no esta vacio, uso recursion para ponerlo
+           if(numero < memoria[3*inicio]){
+              if(memoria[3*inicio + 1] == nulo){
+                memoria[3*inicio + 1] = tope;
               } else {
-                  aux = aux + 2;
+                printf("Llamo al nodo izq con inicio: %hd\n", inicio);
+                agregarNodoDinamico(numero, 3*inicio + 1, memoria, tope);
               }
-            }
-            posActual = posActual + 3;
-          }
-
-          //Lo agrego en la rama del arbol que necesite
-          memoria[aux]= numero;
-
-          //Busco el ultimo nodo y lo agrego ahi
-          while(memoria[posActual]!=0x8000){
-            posActual = posActual + 3;
-          }
-          memoria[posActual]=numero;
-          tope = posActual + 1;
+           } else {
+              printf("Llamo al nodo der con inicio: %hd\n", inicio);
+              agregarNodoDinamico(numero, 3*inicio + 2, memoria, tope);
+           }
         }
 };
+
+
+// ------------------------------------
+//          Calcular Altura
+// ------------------------------------
+
 
 short calcularAlturaEstatico(short izq, short der, short memoria[AREA_MEMORIA]){
     short alturaIzq = 0;
     short alturaDer = 0;
-    if(memoria[izq] != 0x8000){
+    short nulo = 0x8000;
+    if(memoria[izq] != nulo){
         alturaIzq = calcularAlturaEstatico(izq*2+1, izq*2+2, memoria);
     }
-    if(memoria[der] != 0x8000){
+    if(memoria[der] != nulo){
         alturaDer = calcularAlturaEstatico(der*2+1, der*2+2, memoria);
     }
     return max(alturaIzq, alturaDer) + 1;
@@ -95,13 +91,14 @@ short calcularAlturaDinamico(short inicio, short memoria[AREA_MEMORIA]){
     short alturaIzq = 0;
     short alturaDer = 0;
     short aux= inicio;
-    if(memoria[inicio + 1] != 0x8000){
+    short nulo = 0x8000;
+    if(memoria[inicio + 1] != nulo){
         while(memoria[aux] != memoria[inicio+1]){
           aux = aux + 3;
         }
         alturaIzq = calcularAlturaDinamico(aux, memoria);
     }
-    if(memoria[inicio + 2] != 0x8000){
+    if(memoria[inicio + 2] != nulo){
         while(memoria[aux] != memoria[inicio+2]){
           aux = aux + 3;
         }
@@ -110,11 +107,18 @@ short calcularAlturaDinamico(short inicio, short memoria[AREA_MEMORIA]){
     return max(alturaIzq, alturaDer) + 1;
 };
 
+
+// ------------------------------------
+//          Calcular Suma
+// ------------------------------------
+
+
 short calcularSumaEstatico(short tope, short memoria[AREA_MEMORIA]){
     short suma = 0;
     short posActual = 0;
+    short nulo = 0x8000;
     while(posActual<tope){
-        if(memoria[posActual] != 0x8000){
+        if(memoria[posActual] != nulo){
             suma = suma + memoria[posActual];
         }
         posActual = posActual + 1;
@@ -122,11 +126,12 @@ short calcularSumaEstatico(short tope, short memoria[AREA_MEMORIA]){
     return suma;
 };
 
-short calcularSumaDinamico(){
+short calcularSumaDinamico(short tope, short memoria[AREA_MEMORIA]){
     short suma = 0;
     short posActual = 0;
+    short nulo = 0x8000;
     while(posActual<tope){
-        if(memoria[posActual] != 0x8000){
+        if(memoria[posActual] != nulo){
             suma = suma + memoria[posActual];
         }
         posActual = posActual + 3;
@@ -134,34 +139,104 @@ short calcularSumaDinamico(){
     return suma;
 };
 
-/*
-Descripcion:
-- Imprimir Árbol:   
-  - Imprime todos los números del árbol: el parámetro orden indica si se imprimen de menor a mayor (0) o de mayor a menor (1)    
-  - Imprime todos los números del árbol en el PUERTO_SALIDA: el parámetro orden indica si se
-    imprimen de menor a mayor (0) o de mayor a menor (1). 
-*/
-void imprimirArbolEstatico(short orden){
-    
+
+// ------------------------------------
+//          Imprimir Arbol
+// ------------------------------------
+
+
+void imprimirArbolEstatico(short orden, short inicio, short memoria[AREA_MEMORIA]){
+    short nulo = 0x8000;
+    if(orden == 0){
+        //Imprimir de menor a mayor
+        if(memoria[inicio*2+1] != nulo){
+            imprimirArbolEstatico(orden, inicio*2+1, memoria);
+        }
+        printf("%hd\n", memoria[inicio]);
+        if(memoria[inicio*2+2] != nulo){
+            imprimirArbolEstatico(orden, inicio*2+2, memoria);
+        }
+    } else {
+        //Imprimir de mayor a menor
+        if(memoria[inicio*2+2] != nulo){
+            imprimirArbolEstatico(orden, inicio*2+2, memoria);
+        }
+        printf("%hd\n", memoria[inicio]);
+        if(memoria[inicio*2+1] != nulo){
+            imprimirArbolEstatico(orden, inicio*2+1, memoria);
+        }
+    }
 };
 
-void imprimirArbolDinamico(short orden){
+void imprimirArbolDinamico(short orden, short inicio,short memoria[AREA_MEMORIA]){
+    short aux= inicio;
+    short nulo = 0x8000;
+    if(orden==0){
+        //impresion de menor a mayor
+        //Rama izquierda
+        if(memoria[inicio + 1] != nulo){
+            while(memoria[aux] != memoria[inicio+1]){
+              aux = aux + 3;
+            }
+            imprimirArbolDinamico(orden, aux, memoria);
+        }
+        //Raiz
+        printf("%hd\n", memoria[inicio]);
+        //Rama derecha
+        aux = inicio;
+        if(memoria[inicio + 2] != nulo){
+            while(memoria[aux] != memoria[inicio+2]){
+              aux = aux + 3;
+            }
+            imprimirArbolDinamico(orden, aux, memoria);
+        }
+    } else {
+      //impresion de mayor a menor
+      //Rama derecha
+      if(memoria[inicio + 2] != nulo){
+          while(memoria[aux] != memoria[inicio+2]){
+            aux = aux + 3;
+          }
+          imprimirArbolDinamico(orden, aux, memoria);
+      }
+      //Raiz
+      printf("%hd\n", memoria[inicio]);
+      //Rama izquierda
+      aux = inicio;
+      if(memoria[inicio + 1] != nulo){
+          while(memoria[aux] != memoria[inicio+1]){
+            aux = aux + 3;
+          }
+          imprimirArbolDinamico(orden, aux, memoria);
+      }
+    }
 };
 
-/*
-Descripcion:
-- Imprimir Memoria: 
-  - Imprime los primeros N nodos del área de memoria del árbol.
-  - Imprime el contenido de memoria de los primeros N nodos (N es parámetro) en el
-    PUERTO_SALIDA. Tener en cuenta que la cantidad de bytes impresos difiere según el modo de
-    almacenamiento utilizado. En el modo estático se imprimirán 2 * N bytes (ya que cada nodo
-    simplemente guarda los 16 bits del número), mientras que en el modo dinámico se imprimirán
-    6 * N bytes.
-*/
-void imprimirMemoria(short n){
+
+// ------------------------------------
+//          Imprimir Memoria
+// ------------------------------------
+
+
+void imprimirMemoriaEstatico(short n, short memoria[AREA_MEMORIA]){
+    //Imprimir los primeros N nodos del area de memoria del arbol
+    for(int i = 0; i < n; i++){
+        printf("%hd\n", memoria[i]);
+    }
 };
 
-//Menu principal
+void imprimirMemoriaDinamico(short n, short memoria[AREA_MEMORIA]){
+    //Imprimir los primeros N nodos del area de memoria del arbol
+    for(int i = 0; i < n*3; i++){
+        printf("%hd\n", memoria[i]);
+    }
+};
+
+// ------------------------------------
+//          Menu Principal
+// ------------------------------------
+
+// Menu principal
 int menuPrincipal(){
     int opcion = 0;
     printf("Ingrese una opcion:\n");
@@ -176,6 +251,7 @@ int menuPrincipal(){
     return opcion;
 }
 
+// Main
 int main(){
 
     //Arreglo que tengo que llenar con los datos
@@ -205,22 +281,29 @@ int main(){
         for(int i = 0; i < AREA_MEMORIA; i++){
         memoria[i] = 0x8000;
         }
+        tope = 0;
         break;
       };
       case 2:{
         short numero;
         printf("Ingrese el numero: ");
         scanf("%hd", &numero);
-        if(modo = 0){
+        if(modo == 0){
           agregarNodoEstatico(numero, memoria, tope);
         } else {
-          agregarNodoDinamico(numero, memoria, tope);
+          if(tope = 0){
+            tope++;
+          } else {
+            tope= tope + 3;
+          }
+          agregarNodoDinamico(numero, 0, memoria, tope);
+          
         }
         break;
       };
       case 3:{
         short altura;
-        if (modo=0){
+        if (modo==0){
           altura = calcularAlturaEstatico(1,2,memoria);
         } else {
           altura = calcularAlturaDinamico(0,memoria);
@@ -230,7 +313,7 @@ int main(){
       };
       case 4:{
         short suma;
-        if (modo=0){
+        if (modo==0){
           suma = calcularSumaEstatico(tope, memoria);
         } else {
           suma = calcularSumaDinamico(tope, memoria);
@@ -243,14 +326,22 @@ int main(){
         printf("De menor a mayor -> 0 || De mayor a menor -> 1\n");
         printf("Ingrese el orden: ");
         scanf("%hd", &orden);
-        imprimirArbol(orden);
+        if(modo == 0){
+          imprimirArbolEstatico(orden, 0, memoria);
+        } else {
+          imprimirArbolDinamico(orden, 0, memoria);
+        }
         break;
       };
       case 6:{
         short n;
         printf("Ingrese la cantidad de nodos a imprimir: ");
         scanf("%hd", &n);
-        imprimirMemoria(n);
+        if(modo == 0){
+          imprimirMemoriaEstatico(n, memoria);
+        } else {
+          imprimirMemoriaDinamico(n, memoria);
+        }
         break;
       };
       case 255:{
