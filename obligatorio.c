@@ -51,19 +51,25 @@ void agregarNodoDinamico(short numero,short inicio,short memoria[AREA_MEMORIA], 
         //Si el arbol esta vacio
         short nulo = 0x8000;
         if(memoria[inicio]==nulo){
-                     
+            memoria[inicio]=numero;            
         } else {
            //Si no esta vacio, uso recursion para ponerlo
-           if(numero < memoria[3*inicio]){
-              if(memoria[3*inicio + 1] == nulo){
-                memoria[3*inicio + 1] = tope;
+           if(numero < memoria[inicio]){
+              if(memoria[inicio + 1] == nulo){
+                memoria[inicio + 1] = (tope-1)/3;
+                memoria[tope-1] = numero;
               } else {
                 printf("Llamo al nodo izq con inicio: %hd\n", inicio);
-                agregarNodoDinamico(numero, 3*inicio + 1, memoria, tope);
+                agregarNodoDinamico(numero, memoria[inicio +1]*3, memoria, tope);
               }
            } else {
-              printf("Llamo al nodo der con inicio: %hd\n", inicio);
-              agregarNodoDinamico(numero, 3*inicio + 2, memoria, tope);
+            if(memoria[inicio + 2] == nulo){
+                memoria[inicio + 2] = (tope-1)/3;
+                memoria[tope-1] = numero;
+            } else {
+                printf("Llamo al nodo der con inicio: %hd\n", inicio);
+                agregarNodoDinamico(numero, memoria[inicio +2]*3, memoria, tope);
+            }
            }
         }
 };
@@ -92,17 +98,12 @@ short calcularAlturaDinamico(short inicio, short memoria[AREA_MEMORIA]){
     short alturaDer = 0;
     short aux= inicio;
     short nulo = 0x8000;
-    if(memoria[inicio + 1] != nulo){
-        while(memoria[aux] != memoria[inicio+1]){
-          aux = aux + 3;
-        }
-        alturaIzq = calcularAlturaDinamico(aux, memoria);
+    
+    if(memoria[inicio + 1]!= nulo){
+        alturaIzq = calcularAlturaDinamico(memoria[inicio + 1]*3, memoria);
     }
-    if(memoria[inicio + 2] != nulo){
-        while(memoria[aux] != memoria[inicio+2]){
-          aux = aux + 3;
-        }
-        alturaDer = calcularAlturaDinamico(aux, memoria);
+    if(memoria[inicio + 2]!= nulo){
+        alturaDer = calcularAlturaDinamico(memoria[inicio + 2]*3, memoria);
     }
     return max(alturaIzq, alturaDer) + 1;
 };
@@ -169,45 +170,30 @@ void imprimirArbolEstatico(short orden, short inicio, short memoria[AREA_MEMORIA
 };
 
 void imprimirArbolDinamico(short orden, short inicio,short memoria[AREA_MEMORIA]){
-    short aux= inicio;
     short nulo = 0x8000;
     if(orden==0){
         //impresion de menor a mayor
         //Rama izquierda
         if(memoria[inicio + 1] != nulo){
-            while(memoria[aux] != memoria[inicio+1]){
-              aux = aux + 3;
-            }
-            imprimirArbolDinamico(orden, aux, memoria);
+          imprimirArbolDinamico(orden, memoria[inicio + 1]*3, memoria);
         }
         //Raiz
         printf("%hd\n", memoria[inicio]);
         //Rama derecha
-        aux = inicio;
         if(memoria[inicio + 2] != nulo){
-            while(memoria[aux] != memoria[inicio+2]){
-              aux = aux + 3;
-            }
-            imprimirArbolDinamico(orden, aux, memoria);
+          imprimirArbolDinamico(orden, memoria[inicio + 2]*3, memoria);
         }
     } else {
       //impresion de mayor a menor
       //Rama derecha
       if(memoria[inicio + 2] != nulo){
-          while(memoria[aux] != memoria[inicio+2]){
-            aux = aux + 3;
-          }
-          imprimirArbolDinamico(orden, aux, memoria);
+        imprimirArbolDinamico(orden, memoria[inicio + 2]*3, memoria);
       }
       //Raiz
       printf("%hd\n", memoria[inicio]);
       //Rama izquierda
-      aux = inicio;
       if(memoria[inicio + 1] != nulo){
-          while(memoria[aux] != memoria[inicio+1]){
-            aux = aux + 3;
-          }
-          imprimirArbolDinamico(orden, aux, memoria);
+        imprimirArbolDinamico(orden, memoria[inicio + 1]*3, memoria);
       }
     }
 };
@@ -291,7 +277,7 @@ int main(){
         if(modo == 0){
           agregarNodoEstatico(numero, memoria, tope);
         } else {
-          if(tope = 0){
+          if(tope == 0){
             tope++;
           } else {
             tope= tope + 3;
