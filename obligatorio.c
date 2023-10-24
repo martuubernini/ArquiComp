@@ -32,6 +32,10 @@ void agregarNodoEstatico(short numero,short memoria[AREA_MEMORIA], short& tope){
           //Lo busco
           while(memoria[posActual]!=nulo){
             //Si el numero es menor a la raiz
+            if(memoria[posActual] == numero){
+                printf("El numero ya existe en el arbol\n"); //Salida 1
+                return;
+            }
             if(memoria[posActual] > numero){ 
                 posActual = posActual*2+1;
             } else {
@@ -61,6 +65,11 @@ void agregarNodoDinamico(short numero,short inicio,short memoria[AREA_MEMORIA], 
               } else {
                 printf("Llamo al nodo izq con inicio: %hd\n", inicio);
                 agregarNodoDinamico(numero, memoria[inicio +1]*3, memoria, tope);
+                //Truco para multiplicar x 3 en assembler
+                // Mov AX, BX
+                // SHL BX, 1
+                // ADD BX, AX
+                // Ahi queda BX * 3 jejeee
               }
            } else {
             if(memoria[inicio + 2] == nulo){
@@ -264,10 +273,15 @@ int main(){
         printf("Modo estatico -> 0 || Modo dinamico -> 1\n");
         printf("Ingrese el modo: ");
         scanf("%hd", &modo);
+        if(modo != 0 && modo != 1){
+          printf("Modo invalido, por favor reintentar\n"); // Salida 2
+          break;
+        }
         for(int i = 0; i < AREA_MEMORIA; i++){
         memoria[i] = 0x8000;
         }
         tope = 0;
+        printf("Modo cambiado con exito\n"); //Salida 0
         break;
       };
       case 2:{
