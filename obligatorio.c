@@ -16,6 +16,7 @@ short max(short a, short b){
     }
 }
 
+
 // ------------------------------------
 //          Agregar Nodo
 // ------------------------------------
@@ -63,20 +64,13 @@ void agregarNodoDinamico(short numero,short inicio,short memoria[AREA_MEMORIA], 
                 memoria[inicio + 1] = (tope-1)/3;
                 memoria[tope-1] = numero;
               } else {
-                printf("Llamo al nodo izq con inicio: %hd\n", inicio);
                 agregarNodoDinamico(numero, memoria[inicio +1]*3, memoria, tope);
-                //Truco para multiplicar x 3 en assembler
-                // Mov AX, BX
-                // SHL BX, 1
-                // ADD BX, AX
-                // Ahi queda BX * 3 jejeee
               }
            } else {
             if(memoria[inicio + 2] == nulo){
                 memoria[inicio + 2] = (tope-1)/3;
                 memoria[tope-1] = numero;
             } else {
-                printf("Llamo al nodo der con inicio: %hd\n", inicio);
                 agregarNodoDinamico(numero, memoria[inicio +2]*3, memoria, tope);
             }
            }
@@ -96,7 +90,7 @@ short calcularAlturaEstatico(short izq, short der, short memoria[AREA_MEMORIA]){
     if(memoria[izq] != nulo){
         alturaIzq = calcularAlturaEstatico(izq*2+1, izq*2+2, memoria);
     }
-    if(memoria[der] != nulo){
+    if(memoria[der] != nulo){ 
         alturaDer = calcularAlturaEstatico(der*2+1, der*2+2, memoria);
     }
     return max(alturaIzq, alturaDer) + 1;
@@ -226,6 +220,8 @@ void imprimirMemoriaDinamico(short n, short memoria[AREA_MEMORIA]){
         printf("%hd\n", memoria[i]);
     }
 };
+
+
 
 // ------------------------------------
 //          Menu Principal

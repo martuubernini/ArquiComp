@@ -7,8 +7,7 @@
 .data  ; Segmento de datos
 	#define ES 7000h
 	modo db 0
-	tope db 0
-
+	tope db 0x0000
 
 
 ; ------------------------------------
@@ -21,7 +20,9 @@ start:
 	; llamo al menu principal
 	mov bx, es
 	mov si, 0
-	call inicializarEntradas
+
+	mov al, 0
+	mov [tope], al
 	call main
 
 ; ------------------------------------
@@ -30,32 +31,40 @@ start:
 
 main:
 
-    ; Lee un valor de un puerto de entrada (puerto 20)
-	mov al, 64 ; imprimo el 64 antes de procesar el comando
-	out 22, al
-    in al, 20
-	out 22, al ; imprimo el comando ingresado
+    
+	mov ax, 64 ; imprimo el 64 antes de procesar el comando
+	out 22, ax
+
+	; Lee un valor de un puerto de entrada (puerto 20)
+    in ax, 20
+	out 22, ax ; imprimo el comando ingresado
+
+	mov si, 0 ; reinicio si
 	
 	; Comparar el valor leido con las opciones deseadas
-    cmp al, 1
+    cmp ax, 1
     je callCambiarModo
-    cmp al, 2
+    cmp ax, 2
     je callAgregarNodo
-    cmp al, 3
+    cmp ax, 3
     je callCalcularAltura
-    cmp al, 4
+    cmp ax, 4
     je callCalcularSuma
-    cmp al, 5
+    cmp ax, 5
     je callImprimirArbol
-    cmp al, 6
+    cmp ax, 6
     je callImprimirMemoria
-    cmp al, 255
+    cmp ax, 255
     je DetenerPrograma
     ; Si el valor no es valido, envio el error y vuelvo a main
 	mov AX, 2
 	out 22, AX
     jmp main
 
+
+; ------------------------------------
+; 			CAMBIAR MODO 
+; ------------------------------------
 
 callCambiarModo:
 	; Leo que modo se quiere y lo guardo en modo
@@ -69,9 +78,6 @@ callCambiarModo:
 	out 22, al	; Si hay error imprimo 2
     jmp main
 
-; ------------------------------------
-; 			CAMBIAR MODO 
-; ------------------------------------
 
 ;Loop para inicializar la entrada con 0x8000
 loopInicializar: 
@@ -91,8 +97,9 @@ cambiarModo:
 	mov [modo], al
 	call inicializarEntradas
 	mov si, 0	
-	mov al, 0  
-	out 22, al ; Imprimir la salida 
+	mov al, 0
+	mov [tope], al 	; seteo el tope en 0 otra vez 
+	out 22, al 		; Imprimo ' de exxxxito
     jmp main
 
 ; ------------------------------------
@@ -101,41 +108,217 @@ cambiarModo:
 
 ; Dependiendo del modo defino a que funcion llamo
 callAgregarNodo:
-	out 22, al ; Agrego en la bitacora la funcion llamada
 	mov cl, [modo]	
 	cmp cl, 0
 	je callAgregarNodoEstatico
-	jne callAgregarNodoDinamico 
-    call AgregarNodo
-    jmp main
+	jne callAgregarNodoDinamico
+
+
+;---------- ESTATICO ------------
 
 ; Llamo a la funcion estatica e imprimo las salidas en el out
 callAgregarNodoEstatico:
+	in ax, 20 	; Leo el nodo a ingresar
+	out 22, ax	; Agrego a la bitacora el parametro ingresado
 	call AgregarNodoEstatico
-	in al, 20 ; Leo el nodo a ingresar
-	out 22, al ; Añado a la bitacora el parametro ingresado
-	mov al, 0
-	out 22, al
+	mov ax, 0
+	mov si, 0
 	jmp main
 
 ; Funcion para agregar el nodo en modo estatico
 AgregarNodoEstatico proc
-    ; Logica de agregar nodo estatico
-	out 21, al
+	; controlo si hay error de overflow
+	; agarro la posicion donde chequeo q pueda ir el nuevo nodo (si)
+	; me fijo si esa posicion se pasa del rango
+	push ax
+
+	mov ax, si
+	inc ax
+	inc ax
+
+	cmp ax, 4096		;Veo si hay error de overflow
+	jg errorOverflow
+
+	pop ax
+		
+	mov cx, 0x8000
+	cmp ES:[bx + si], cx 	; me fijo si la posicion bx + si del arreglo es nula
+	jne recorrerEstatico	; si no lo es, busco recursivamente donde puedo encontrarlo
+
+	mov ES:[bx + si], ax	; si es nula y esta todo ok en regla, lo a�ado al arbol
+	mov ax, ES:[bx + si]
+	
+	mov ax, si
+	inc ax
+	inc ax
+
+	push ax
+
+	mov al, 0
+	out 22, al 				; imprimo el 0 de exitoooo
+
+	pop ax
+
+	cmp [tope], ax
+	jl actualizarTopeEstatico
+
+	jmp finCargarNodoEstatico	; the end
+	
+recorrerEstatico:			; dependiendo del valor de num, veo para q rama del arbol mandar (o mandar error)
+	cmp ax, ES:[bx + si]	
+	je errorNodoYaExiste	; si son iguales -> error, el nodo ya existe
+	jl recorrerIzqEstatico	; si es menor -> busco en la rama izquierda
+	jg recorrerDerEstatico	; si es mayor -> busco en la rama derecha
+
+recorrerIzqEstatico:			; busco en si = 2*si + 2
+	add si,si
+	add si,2
+	call AgregarNodoEstatico
+	jmp finCargarNodoEstatico
+
+recorrerDerEstatico:			; busco en si= 2*si + 4
+	add si,si
+	add si,4
+	call AgregarNodoEstatico
+	jmp finCargarNodoEstatico
+
+errorNodoYaExiste:				; largo el error
+	mov al, 8
+	out 22, al
+	jmp finCargarNodoEstatico
+
+errorOverflow:					; largo el error x2
+	pop ax
+	mov al, 4
+	out 22, al
+	mov al, 0
+	jmp finCargarNodoEstatico
+
+actualizarTopeEstatico:
+	mov [tope], ax
+	mov ax, [tope]
+
+finCargarNodoEstatico:			; fin
     ret
 AgregarNodoEstatico endp
+	
+
+
+;---------- DINAMICO ------------
 
 ; Llamo a la funcion dinamica e imprimo las salidas en el out
 callAgregarNodoDinamico:
+	in ax, 20 ; Leo el nodo a ingresar
+	out 22, ax ; Agrego a la bitacora el parametro ingresado
 	call AgregarNodoDinamico
-	mov al, 0
-	out 22, al
+	mov ax, 0
+	mov si, 0
 	jmp main
 
 ; Funcion para agregar el nodo en modo dinamico
 AgregarNodoDinamico proc
-    ; Logica de agregar nodo dinamico
-	out 21, al
+	; me fijo si al agregar el nodo, me paso del tope
+	push ax				; Guardo en el stack el numero a almacenar
+	mov ax, [tope]		; almaceno el tope
+	cmp ax, 4096		; Veo si hay error de overflow
+	jg errorOverflowDin	; si lo hay --> mando pal error
+	pop ax				; si no lo hay, recupero ax y sigo como si nada
+
+	; Ahora hago el proceso de agregar el nodo
+	; Veo si la posicion donde estoy es nula
+	; Si es nula --> agrego el nodo nomas
+	; Si no lo es ---> avanzo en el arbol buscando una posicion nula (o buscando error)
+
+	mov cx, 0x8000
+	cmp ES:[bx + si], cx 	; me fijo si la posicion bx + si del arreglo es nula
+	jne recorrerDinamico	; si no lo es, busco recursivamente donde puedo encontrarlo
+	je agregarNodo 		; si lo es, agrego el nodo y lisssto
+	
+
+recorrerDinamico:			;  dependiendo del valor de num, veo para q rama del arbol mandar (o mandar error)		
+	cmp ax, ES:[bx + si]	
+	je errorNodoYaExisteDin	; si son iguales -> error, el nodo ya existe
+	jl recorrerIzqDinamico	; si es menor -> busco en la rama izquierda
+	jg recorrerDerDinamico	; si es mayor -> busco en la rama derecha
+
+recorrerIzqDinamico:							
+	add si,2	; me muevo a la izq
+
+	cmp ES:[bx + si],cx			; si el espacio es nulo, me mando para agregarlo
+	je agregarNodo				
+
+	; si no lo es, sigo buscando por las ramas
+	; busco en si = ES:[bx + si + 2] * 6
+	push ax 	; guardo ax
+	
+	; Hago la cuenta para que si = lo q dice arriba
+	mov ax, ES:[bx + si] 		 
+	mov si, ES:[bx + si]		 
+	shl si,1					; si = si * 2
+	add si,ax					; si = si * 2 + ax. Y ax= si --> si = si * 3
+	add si,si					; si = si * 3 + si * 3 = 6 * ES:[bx + si] * 6
+
+	pop ax		; recupero ax
+	call AgregarNodoDinamico
+	jmp finCargarNodoDinamico
+
+recorrerDerDinamico:		
+	add si,4	; me muevo a la der
+
+	cmp ES:[bx + si],cx			; si el espacio es nulo, me mando para agregarlo
+	je agregarNodo				
+
+	; si no lo es, sigo buscando por las ramas
+	; busco en si = ES:[bx + si + 2] * 6
+	push ax 	; guardo ax
+	
+	; Hago la cuenta para que si = lo q dice arriba
+	mov ax, ES:[bx + si] 		 
+	mov si, ES:[bx + si]		 
+	shl si,1					; si = si * 2
+	add si,ax					; si = si * 2 + ax. Y ax= si --> si = si * 3
+	add si,si					; si = si * 3 + si * 3 = 6 * ES:[bx + si] * 6
+
+	pop ax		; recupero ax
+	call AgregarNodoDinamico
+	jmp finCargarNodoDinamico
+	
+errorNodoYaExisteDin:				; largo el error
+	mov al, 8
+	out 22, al
+	jmp finCargarNodoDinamico
+
+errorOverflowDin:					; largo el error x2
+	pop ax
+	mov al, 4
+	out 22, al
+	mov al, 0
+	jmp finCargarNodoDinamico
+	
+agregarNodo:
+	push ax ;guardo ax con el numero a agregar a futuro
+
+	mov ax, [tope] 		 	; tomo el tope
+	
+	mov cx, 6
+	div cx
+	
+	mov	ES:[bx + si], ax 	; registro el nodo izq o der con la refencia al tope (donde se va a guardar el elemento
+	
+	mov cx, 0
+	pop ax	; recupero ax
+	
+	
+	mov si, [tope]			; hago que si apunte al tope (ahi agrego el nodo ax)
+	mov ES:[bx + si], ax	; a�ado el numero finalmente
+
+	mov ax, 6
+	add [tope], ax
+	
+	mov ax, 0				; imprimo 0 de exxxxxito
+	out 22, ax
+
+finCargarNodoDinamico:
     ret
 AgregarNodoDinamico endp
 
@@ -145,14 +328,40 @@ AgregarNodoDinamico endp
 ; ------------------------------------
 
 callCalcularAltura:
-    call CalcularAltura
-    jmp main
+    mov cl, [modo]	
+	cmp cl, 0
+	je callImprimirMemoriaEstatico
+	jne callImprimirMemoriaDinamico
 
-CalcularAltura proc
+; ---------- Estatico ---------------
+
+callCalcularAlturaEstatico:
+	mov ax, 0
+	mov cx, 0
+	mov si, 0
+	call CalcularAlturaEstatico
+
+CalcularAlturaEstatico proc
     ; Logica de calcular altura
-	out 21, al
+
+finCalcularAlturaEstatico:	
     ret
-CalcularAltura endp
+CalcularAlturaEstatico endp
+
+; ---------- Dinamico ---------------
+
+callCalcularAlturaDinamico:
+	mov ax, 0
+	mov cx, 0
+	mov si, 0
+	call CalcularAlturaDinamico
+
+CalcularAlturaDinamico proc
+    ; Logica de calcular altura
+
+finCalcularAlturaDinamico:	
+    ret
+CalcularAlturaDinamico endp
 
 
 ; ------------------------------------
@@ -160,14 +369,92 @@ CalcularAltura endp
 ; ------------------------------------
 
 callCalcularSuma:
-    call CalcularSuma
-    jmp main
+    mov cl, [modo]	
+	cmp cl, 0
+	je callCalcularSumaEstatico
+	jne callCalcularSumaDinamico
 
-CalcularSuma proc
-    ; Logica de calcular suma
-	out 21, al
-    ret
-CalcularSuma endp
+; ----------- Estatico ----------
+
+callCalcularSumaEstatico:
+	mov ax, 0
+	mov cx, 0x8000
+	mov si, 0
+	call CalcularSumaEstatico
+	out 21, ax
+	mov ax, 0 
+	out 22, ax
+
+CalcularSumaEstatico proc
+    ; Veo si no me pase del tope
+	push ax
+	mov ax, [tope]
+	cmp ax, si
+	jle desPopeoEst
+	; Si no lo es	
+	; veo si no es nulo
+	cmp cx, ES:[bx+si]
+	je avanzarIndiceEstatico ; si es nulo, avanzo 2 y bueno, veo q onda
+	pop ax
+
+	add ax, ES:[bx + si]
+	push ax
+	
+avanzarIndiceEstatico:
+	mov ax,si
+	add ax, 2
+	mov si, ax
+	pop ax
+	call CalcularSumaEstatico
+	jmp finCalcularSumaEstatico
+
+desPopeoEst:
+	pop ax
+
+finCalcularSumaEstatico:	
+	ret
+CalcularSumaEstatico endp
+
+
+;---------------- Dinamico -------------
+
+callCalcularSumaDinamico:
+	mov ax, 0
+	mov cx, 0x8000
+	mov si, 0
+	call CalcularSumaDinamico
+	out 21, ax
+
+CalcularSumaDinamico proc
+    ; Veo si no me pase del tope
+	push ax
+	mov ax, [tope]
+	cmp ax, si
+	jle desPopeoDin
+	; Si no lo es	
+	; veo si no es nulo
+	cmp cx, ES:[bx+si]
+	je avanzarIndiceDinamico ; si es nulo, avanzo 2 y bueno, veo q onda
+	pop ax
+
+	add ax, ES:[bx + si]
+	push ax
+	
+avanzarIndiceDinamico:
+	mov ax,si
+	add ax, 3
+	mov si, ax
+	pop ax
+	call CalcularSumaDinamico
+	jmp finCalcularSumaDinamico
+
+desPopeoDin:
+	pop ax
+
+finCalcularSumaDinamico:	
+	ret
+CalcularSumaDinamico endp
+
 
 ; ------------------------------------
 ; 			IMPRIMIR ARBOL
@@ -188,14 +475,85 @@ ImprimirArbol endp
 ; ------------------------------------
 
 callImprimirMemoria:
-    call ImprimirMemoria
-    jmp main
+	mov cl, [modo]	
+	cmp cl, 0
+	je callImprimirMemoriaEstatico
+	jne callImprimirMemoriaDinamico
 
-ImprimirMemoria proc
-    ; Logica de imprimir memoria
-	out 21, al
+; ----------- ESTATICO -----------------
+
+callImprimirMemoriaEstatico:
+	in ax, 20 	; Leo la cantidad de nodos a imprimir
+	out 22, ax	; Agrego a la bitacora el parametro ingresado
+	shl ax,1	; lo multiplico por dos, basicamente xq la memoria va de 2 en 2
+	mov si,0	; me paro en el inicio de ES
+	call ImprimirMemoriaEstatico
+	mov ax, 0
+	out 22, ax	; imprimo 0 de exxxxxito
+	mov si, 0
+	jmp main
+
+ImprimirMemoriaEstatico proc
+	mov cx, si
+    cmp cx, ax
+	jl loopImprimirEstatico
+	jmp finImprimirMemoriaEstatico
+
+loopImprimirEstatico:
+	push ax
+
+	mov ax, ES:[bx + si]
+	out 21, ax
+	mov ax, si
+	add ax , 2
+	mov si, ax
+
+	pop ax
+	call ImprimirMemoriaEstatico
+	
+finImprimirMemoriaEstatico:
     ret
-ImprimirMemoria endp
+ImprimirMemoriaEstatico endp
+
+; ----------- DINAMICO -----------------
+
+callImprimirMemoriaDinamico:
+	in ax, 20 	; Leo la cantidad de nodos a imprimir
+	out 22, ax	; Agrego a la bitacora el parametro ingresado
+		
+	mov si, ax					; si = ax
+	shl ax,1					; ax = ax * 2
+	add ax,si					; ax = ax * 2 + si. Y ax = si --> ax = ax * 3
+	add ax,ax					; ax = ax * 3 + ax * 3 = 6 * ax
+	
+	mov si,0	; me paro en el inicio de ES
+	call ImprimirMemoriaDinamico
+	mov ax, 0
+	out 22, ax ; imprimo 0 de exxxxxito
+	mov si, 0
+	jmp main
+
+ImprimirMemoriaDinamico proc
+    mov cx, si
+    cmp cx, ax
+	jl loopImprimirDinamico
+	jmp finImprimirMemoriaDinamico
+
+loopImprimirDinamico:
+	push ax
+
+	mov ax, ES:[bx + si]
+	out 21, ax
+	mov ax, si
+	add ax, 2
+	mov si, ax
+
+	pop ax
+	call ImprimirMemoriaDinamico
+	
+finImprimirMemoriaDinamico:
+    ret
+ImprimirMemoriaDinamico endp
 
 ; ------------------------------------
 ; 			DETENER PROGRAMA
@@ -209,11 +567,9 @@ DetenerPrograma:
 
 exit:
     ; Sal de la aplicacion
-    mov ah, 4Ch
-    int 21h
 
 	
 .ports ; Definicion de puertos
-20: 1, 1, 1, 3, 255
+20: 1,0,2,100,2,200,2,50,2,30,2,150,4,1,1,2,102,2,202,2,52,2,32,2,152,4,255
 ; 200: 1,2,3  ; Ejemplo puerto simple
 ; 201:(100h,10),(200h,3),(?,4)  ; Ejemplo puerto PDDV
