@@ -23,7 +23,7 @@ start:
 
 	mov al, 0
 	mov [tope], al
-	call main
+	jmp main
 
 ; ------------------------------------
 ; 			MENU PRINCIPAL 
@@ -99,7 +99,7 @@ cambiarModo:
 	mov si, 0	
 	mov al, 0
 	mov [tope], al 	; seteo el tope en 0 otra vez 
-	out 22, al 		; Imprimo ' de exxxxito
+	out 22, al 		; Imprimo el 0 de exxxxito
     jmp main
 
 ; ------------------------------------
@@ -380,37 +380,34 @@ callCalcularSumaEstatico:
 	mov ax, 0
 	mov cx, 0x8000
 	mov si, 0
+	mov dx, 0
 	call CalcularSumaEstatico
+	mov ax, dx
 	out 21, ax
+	mov dx, 0
 	mov ax, 0 
 	out 22, ax
+	jmp main
 
 CalcularSumaEstatico proc
     ; Veo si no me pase del tope
-	push ax
 	mov ax, [tope]
 	cmp ax, si
-	jle desPopeoEst
+	jle finCalcularSumaEstatico
 	; Si no lo es	
 	; veo si no es nulo
 	cmp cx, ES:[bx+si]
 	je avanzarIndiceEstatico ; si es nulo, avanzo 2 y bueno, veo q onda
-	pop ax
 
-	add ax, ES:[bx + si]
-	push ax
-	
+	add dx, ES:[bx + si]
+	jmp avanzarIndiceEstatico
+
 avanzarIndiceEstatico:
 	mov ax,si
 	add ax, 2
 	mov si, ax
-	pop ax
 	call CalcularSumaEstatico
 	jmp finCalcularSumaEstatico
-
-desPopeoEst:
-	pop ax
-
 finCalcularSumaEstatico:	
 	ret
 CalcularSumaEstatico endp
@@ -422,34 +419,32 @@ callCalcularSumaDinamico:
 	mov ax, 0
 	mov cx, 0x8000
 	mov si, 0
+	mov dx, 0
 	call CalcularSumaDinamico
+	mov ax, dx
 	out 21, ax
+	mov dx, 0
+	mov ax, 0 
+	out 22, ax
+	jmp main
 
 CalcularSumaDinamico proc
     ; Veo si no me pase del tope
-	push ax
 	mov ax, [tope]
 	cmp ax, si
-	jle desPopeoDin
+	jle finCalcularSumaDinamico
 	; Si no lo es	
 	; veo si no es nulo
 	cmp cx, ES:[bx+si]
-	je avanzarIndiceDinamico ; si es nulo, avanzo 2 y bueno, veo q onda
-	pop ax
+	je avanzarIndiceDinamico ; si es nulo, avanzo 6 y bueno, veo q onda
 
-	add ax, ES:[bx + si]
-	push ax
+	add dx, ES:[bx + si]
 	
 avanzarIndiceDinamico:
 	mov ax,si
-	add ax, 3
+	add ax, 6
 	mov si, ax
-	pop ax
 	call CalcularSumaDinamico
-	jmp finCalcularSumaDinamico
-
-desPopeoDin:
-	pop ax
 
 finCalcularSumaDinamico:	
 	ret

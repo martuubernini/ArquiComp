@@ -130,6 +130,7 @@ short calcularSumaEstatico(short tope, short memoria[AREA_MEMORIA]){
     return suma;
 };
 
+
 short calcularSumaDinamico(short tope, short memoria[AREA_MEMORIA]){
     short suma = 0;
     short posActual = 0;
