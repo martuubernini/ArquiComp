@@ -330,8 +330,8 @@ AgregarNodoDinamico endp
 callCalcularAltura:
     mov cl, [modo]	
 	cmp cl, 0
-	je callImprimirMemoriaEstatico
-	jne callImprimirMemoriaDinamico
+	je callCalcularAlturaEstatico
+	jne callCalcularAlturaDinamico
 
 ; ---------- Estatico ---------------
 
@@ -340,12 +340,46 @@ callCalcularAlturaEstatico:
 	mov cx, 0
 	mov si, 0
 	call CalcularAlturaEstatico
+	out 21, ax
+	mov ax, 0
+	out 22, ax
+	jmp main
 
 CalcularAlturaEstatico proc
     ; Logica de calcular altura
+	; Veo si es null
+	
+	cmp ES:[bx + si], 0x8000
+	je finCalcularAlturaEstatico
+
+	push si
+
+	add si,si
+	add si,2
+	
+	call CalcularAlturaEstatico
+
+	pop si
+	push ax
+
+	mov ax,0
+	add si,si
+	add si,4
+
+	call CalcularAlturaEstatico
+	pop cx
+
+	cmp ax, cx
+	jl elijoMaxEstatico
+	add ax,1
+	jmp finCalcularAlturaEstatico
+
+elijoMaxEstatico:
+	mov ax, cx
+	add ax, 1
 
 finCalcularAlturaEstatico:	
-    ret
+	ret
 CalcularAlturaEstatico endp
 
 ; ---------- Dinamico ---------------
@@ -354,10 +388,61 @@ callCalcularAlturaDinamico:
 	mov ax, 0
 	mov cx, 0
 	mov si, 0
+	mov dx, 0
 	call CalcularAlturaDinamico
+	out 21, ax
+	mov ax, 0
+	out 22, ax
+	jmp main
 
 CalcularAlturaDinamico proc
     ; Logica de calcular altura
+	; Veo si es null
+	
+	cmp ES:[bx + si], 0x8000
+	je finCalcularAlturaDinamico
+
+	push si
+
+	add si, 2
+	mov si, ES:[bx + si]
+	cmp si, 0x8000
+	je calcularDerecho
+	mov dx, si				; dx = si
+	shl si,1				; si = si * 2
+	add si,dx 				; si = si * 3
+	add si,si				; si = si * 6
+	
+	call CalcularAlturaDinamico
+
+calcularDerecho:
+	pop si
+	push ax
+
+	mov ax,0
+	
+	add si, 4
+	mov si, ES:[bx + si]
+	cmp si, 0x8000
+	je comparacionMaximo
+	mov dx, si				; dx = si
+	shl si,1				; si = si * 2
+	add si,dx 				; si = si * 3
+	add si,si				; si = si * 6
+
+	call CalcularAlturaDinamico
+	
+comparacionMaximo:
+	pop cx
+	cmp ax, cx
+	jl elijoMaxDinamico
+	add ax,1
+	jmp finCalcularAlturaDinamico
+
+
+elijoMaxDinamico:
+	mov ax, cx
+	add ax, 1
 
 finCalcularAlturaDinamico:	
     ret
@@ -382,7 +467,6 @@ callCalcularSumaEstatico:
 	mov si, 0
 	mov dx, 0
 	call CalcularSumaEstatico
-	mov ax, dx
 	out 21, ax
 	mov dx, 0
 	mov ax, 0 
@@ -421,7 +505,6 @@ callCalcularSumaDinamico:
 	mov si, 0
 	mov dx, 0
 	call CalcularSumaDinamico
-	mov ax, dx
 	out 21, ax
 	mov dx, 0
 	mov ax, 0 
@@ -565,6 +648,6 @@ exit:
 
 	
 .ports ; Definicion de puertos
-20: 1,0,2,100,2,200,2,50,2,30,2,150,4,1,1,2,102,2,202,2,52,2,32,2,152,4,255
+20: 1,0,3,1,1,3,1,0,2,4,3,1,1,2,5,3,1,0,2,100,2,128,2,60,2,40,2,20,2,22,3,1,1,2,50,2,40,2,30,2,45,2,46,2,47,2,48,3,255
 ; 200: 1,2,3  ; Ejemplo puerto simple
 ; 201:(100h,10),(200h,3),(?,4)  ; Ejemplo puerto PDDV
