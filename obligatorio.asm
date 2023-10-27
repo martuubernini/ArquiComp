@@ -57,7 +57,7 @@ main:
     cmp ax, 255
     je DetenerPrograma
     ; Si el valor no es valido, envio el error y vuelvo a main
-	mov AX, 2
+	mov AX, 1
 	out 22, AX
     jmp main
 
@@ -539,14 +539,249 @@ CalcularSumaDinamico endp
 ; ------------------------------------
 
 callImprimirArbol:
-    call ImprimirArbol
+    mov cl, [modo]	
+	cmp cl, 0
+	je callImprimirArbolEstatico
+	jne callImprimirArbolDinamico
+
+; >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+; ------------ Estatico ----------------
+; <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+callImprimirArbolEstatico:
+	; Leo que modo se quiere
+	in ax, 20
+	out 22, ax ; imprimo el modo ingresado
+	cmp ax, 0
+	je callImprimirArbolEstaticoMenor
+	cmp al, 1
+	je callImprimirArbolEstaticoMayor
+	mov al, 2
+	out 22, al	; Si hay error imprimo 2
     jmp main
 
-ImprimirArbol proc
-    ; Logica de imprimir arbol
-	out 21, al
+callImprimirArbolEstaticoMenor:
+	mov ax,0
+	call ImprimirArbolEstaticoMenor
+	mov ax,0
+	out 22, ax	; imprimo 0 de exxxxxito
+	jmp main	; vuelvo al menu principal
+
+callImprimirArbolEstaticoMayor:
+	mov ax,0
+	call ImprimirArbolEstaticoMayor
+	mov ax,0
+	out 22, ax	; imprimo 0 de exxxxxito
+	jmp main	; vuelvo al menu principal
+
+; --------- Menor a mayor --------------
+
+ImprimirArbolEstaticoMenor proc
+	; Logica de imprimir arbol
+	cmp ES:[bx + si], 0x8000
+	je finImprimirArbolEstaticoMenor
+
+	; guardo la posicion del nodo
+	push si
+
+	; me muevo a la rama izquierda
+	add si,si
+	add si,2
+	
+	; imprimo lo de la izquierda
+	call ImprimirArbolEstaticoMenor
+
+	; recupero la posicion del nodo
+	pop si
+	
+	; imprimo el nodo
+	mov ax, ES:[bx + si]
+	out 21, ax
+
+	; me muevo a la rama derecha
+	add si,si
+	add si,4
+
+	; imprimo lo de la derecha
+	call ImprimirArbolEstaticoMenor
+
+finImprimirArbolEstaticoMenor:
     ret
-ImprimirArbol endp
+ImprimirArbolEstaticoMenor endp
+
+; --------- Mayor a menor --------------
+
+ImprimirArbolEstaticoMayor proc
+	; Logica de imprimir arbol
+	cmp ES:[bx + si], 0x8000
+	je finImprimirArbolEstaticoMayor
+
+	; guardo la posicion del nodo
+	push si
+
+	; me muevo a la rama derecha
+	add si,si
+	add si,4
+
+	; imprimo lo de la derecha
+	call ImprimirArbolEstaticoMayor
+
+	; recupero la posicion del nodo
+	pop si
+	
+	; imprimo el nodo
+	mov ax, ES:[bx + si]
+	out 21, ax
+
+	; me muevo a la rama izquierda
+	add si,si
+	add si,2
+	
+	; imprimo lo de la izquierda
+	call ImprimirArbolEstaticoMayor
+
+finImprimirArbolEstaticoMayor:
+    ret
+ImprimirArbolEstaticoMayor endp
+
+
+; >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+; ----------- Dinamico -----------------
+; <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+callImprimirArbolDinamico:
+	; Leo que modo se quiere
+	in ax, 20
+	out 22, ax ; imprimo el modo ingresado
+	cmp ax, 0
+	je callImprimirArbolDinamicoMenor
+	cmp ax, 1
+	je callImprimirArbolDinamicoMayor
+	mov ax, 2
+	out 22, ax	; Si hay error imprimo 2
+    jmp main
+
+callImprimirArbolDinamicoMenor:
+	mov ax,0
+	call ImprimirArbolDinamicoMenor
+	mov ax,0
+	out 22, ax	; imprimo 0 de exxxxxito
+	jmp main	; vuelvo al menu principal
+
+callImprimirArbolDinamicoMayor:
+	mov ax,0
+	call ImprimirArbolDinamicoMayor
+	mov ax,0
+	out 22, ax	; imprimo 0 de exxxxxito
+	jmp main	; vuelvo al menu principal
+
+; --------- Menor a mayor --------------
+
+ImprimirArbolDinamicoMenor proc
+	; Logica de imprimir arbol
+	cmp ES:[bx + si], 0x8000
+	je finImprimirArbolDinamicoMenor
+
+	; guardo la posicion del nodo
+	push si
+
+	; me muevo a la rama izquierda
+	; si no tengo nada para moverme, voy directo a imprimir el nodo
+	add si, 2
+	mov si, ES:[bx + si]
+	cmp si, 0x8000
+	je imprimirNodoMenor
+
+	; sino, sigo en la busqueda por la izquierda
+	mov dx, si				; dx = si
+	shl si,1				; si = si * 2
+	add si,dx 				; si = si * 3
+	add si,si				; si = si * 6
+
+	; imprimo lo de la izquierda
+	call ImprimirArbolDinamicoMenor
+
+imprimirNodoMenor:
+	; recupero la posicion del nodo
+	pop si
+	
+	; imprimo el nodo
+	mov ax, ES:[bx + si]
+	out 21, ax
+
+	; me muevo a la rama derecha
+	; si no tengo nada para moverme, voy directo al fin
+	add si, 4
+	mov si, ES:[bx + si]
+	cmp si, 0x8000
+	je finImprimirArbolDinamicoMenor
+
+	; sino, sigo en la busqueda por la derecha
+	mov dx, si				; dx = si
+	shl si,1				; si = si * 2
+	add si,dx 				; si = si * 3
+	add si,si				; si = si * 6
+	
+	; imprimo lo de la derecha
+	call ImprimirArbolDinamicoMenor
+
+finImprimirArbolDinamicoMenor:
+    ret
+ImprimirArbolDinamicoMenor endp
+
+; --------- Mayor a menor --------------
+
+ImprimirArbolDinamicoMayor proc
+	; Logica de imprimir arbol
+	cmp ES:[bx + si], 0x8000
+	je finImprimirArbolDinamicoMayor
+
+	; guardo la posicion del nodo
+	push si
+
+	; me muevo a la rama derecha
+	; si no tengo nada para moverme, voy directo a imprimir el nodo
+	add si, 4
+	mov si, ES:[bx + si]
+	cmp si, 0x8000
+	je imprimirNodoMayor
+
+	; sino, sigo en la busqueda por la derecha
+	mov dx, si				; dx = si
+	shl si,1				; si = si * 2
+	add si,dx 				; si = si * 3
+	add si,si				; si = si * 6
+	
+	; imprimo lo de la derecha
+	call ImprimirArbolDinamicoMayor
+
+imprimirNodoMayor:
+	; recupero la posicion del nodo
+	pop si
+	
+	; imprimo el nodo
+	mov ax, ES:[bx + si]
+	out 21, ax
+
+	; me muevo a la rama izquierda
+	; si no tengo nada para moverme, voy directo al fin
+	add si, 2
+	mov si, ES:[bx + si]
+	cmp si, 0x8000
+	je finImprimirArbolDinamicoMayor
+
+	; sino, sigo en la busqueda por la izquierda
+	mov dx, si				; dx = si
+	shl si,1				; si = si * 2
+	add si,dx 				; si = si * 3
+	add si,si				; si = si * 6
+
+	; imprimo lo de la izquierda
+	call ImprimirArbolDinamicoMayor
+
+finImprimirArbolDinamicoMayor:
+    ret
+ImprimirArbolDinamicoMayor endp
 
 ; ------------------------------------
 ; 			IMPRIMIR MEMORIA
@@ -563,6 +798,11 @@ callImprimirMemoria:
 callImprimirMemoriaEstatico:
 	in ax, 20 	; Leo la cantidad de nodos a imprimir
 	out 22, ax	; Agrego a la bitacora el parametro ingresado
+
+	mov cx, 0
+	cmp ax,cx	
+	jl errorNumeroInvalido
+
 	shl ax,1	; lo multiplico por dos, basicamente xq la memoria va de 2 en 2
 	mov si,0	; me paro en el inicio de ES
 	call ImprimirMemoriaEstatico
@@ -570,6 +810,12 @@ callImprimirMemoriaEstatico:
 	out 22, ax	; imprimo 0 de exxxxxito
 	mov si, 0
 	jmp main
+
+errorNumeroInvalido:
+	mov ax, 2
+	out 22, ax
+	jmp main
+	
 
 ImprimirMemoriaEstatico proc
 	mov cx, si
@@ -648,6 +894,6 @@ exit:
 
 	
 .ports ; Definicion de puertos
-20: 1,0,3,1,1,3,1,0,2,4,3,1,1,2,5,3,1,0,2,100,2,128,2,60,2,40,2,20,2,22,3,1,1,2,50,2,40,2,30,2,45,2,46,2,47,2,48,3,255
+20: 1,2,1,-1,5,-1,5,4,6,-1,244,-5,255
 ; 200: 1,2,3  ; Ejemplo puerto simple
 ; 201:(100h,10),(200h,3),(?,4)  ; Ejemplo puerto PDDV
