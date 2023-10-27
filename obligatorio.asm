@@ -468,6 +468,7 @@ callCalcularSumaEstatico:
 	mov si, 0
 	mov dx, 0
 	call CalcularSumaEstatico
+	mov ax, dx
 	out 21, ax
 	mov dx, 0
 	mov ax, 0 
@@ -488,7 +489,7 @@ CalcularSumaEstatico proc
 	jmp avanzarIndiceEstatico
 
 avanzarIndiceEstatico:
-	mov ax,si
+	mov ax, si
 	add ax, 2
 	mov si, ax
 	call CalcularSumaEstatico
@@ -506,6 +507,7 @@ callCalcularSumaDinamico:
 	mov si, 0
 	mov dx, 0
 	call CalcularSumaDinamico
+	mov ax, dx
 	out 21, ax
 	mov dx, 0
 	mov ax, 0 
@@ -895,6 +897,6 @@ exit:
 
 	
 .ports ; Definicion de puertos
-20: 1,2,1,-1,5,-1,5,4,6,-1,244,-5,255
+20: 1,0,2,100,2,200,2,50,2,30,2,150,4,1,1,2,102,2,202,2,52,2,32,2,152,4,255
 ; 200: 1,2,3  ; Ejemplo puerto simple
 ; 201:(100h,10),(200h,3),(?,4)  ; Ejemplo puerto PDDV
