@@ -222,7 +222,7 @@ void imprimirMemoriaDinamico(short n, short memoria[AREA_MEMORIA]){
     }
 };
 
-
+// Agregar manejo de errores ?????
 
 // ------------------------------------
 //          Menu Principal

@@ -1,4 +1,5 @@
 ; Tarea arquitectura de computadoras
+; Martina Bernini. 5.041.130-6
 
 ; ------------------------------------
 ; 			SEGMENTO DE DATOS 
