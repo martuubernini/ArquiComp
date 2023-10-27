@@ -6,7 +6,7 @@ Este repositorio contiene el código fuente para la implementación de funciones
 ## Modos de Implementación
 Existen dos modos de implementación para los árboles binarios de búsqueda:
 
-1. **Modo Estático**: En este modo, el árbol se almacena teniendo de forma explicita la ubicacion de sus ramas. Donde si un nodo se encuentra en la posicion i, su rama izquierda se encontrara en la posicion 2*i + 1 y su rama derecha en 2*i +2
+1. **Modo Estático**: En este modo, el árbol se almacena teniendo de forma explicita la ubicacion de sus ramas. Donde si un nodo se encuentra en la posicion i, su rama izquierda se encontrara en la posicion (2 * i) + 1 y su rama derecha en (2 * i) + 2
 
 2. **Modo Dinámico**: En este modo, cada nodo del arbol cuenta con 3 campos, uno que contiene al numero, y los restantes indican en que posicion se encuentran sus ramas izquierda y derecha. Los nodos son agregados uno tras de otro.
  
