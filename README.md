@@ -27,7 +27,7 @@ Existen dos modos de implementación para los árboles binarios de búsqueda:
 - [x] Implementar la función que calcula la suma de todos los nodos en el árbol en modo estático.
 
 #### Imprimir Árbol (Modo Estático)
-- [ ] Implementar la función para imprimir el árbol de mayor a menor o menor a mayor dependiendo del parametro de entrada.
+- [x] Implementar la función para imprimir el árbol de mayor a menor o menor a mayor dependiendo del parametro de entrada.
 
 #### Imprimir Memoria (Modo Estático)
 - [x] Implementar la función que muestra la información de la memoria utilizada por el árbol en modo estático.
@@ -44,7 +44,7 @@ Existen dos modos de implementación para los árboles binarios de búsqueda:
 - [x] Implementar la función que calcula la suma de todos los nodos en el árbol en modo dinámico.
 
 #### Imprimir Árbol (Modo Dinámico)
-- [ ] Implementar la función para imprimir el árbol de mayor a menor o menor a mayor dependiendo del parametro de entrada.
+- [x] Implementar la función para imprimir el árbol de mayor a menor o menor a mayor dependiendo del parametro de entrada.
 
 #### Imprimir Memoria (Modo Dinámico)
 - [x] Implementar la función que muestra la información de la memoria utilizada por el árbol en modo dinámico.
