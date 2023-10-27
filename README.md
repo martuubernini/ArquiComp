@@ -21,7 +21,7 @@ Existen dos modos de implementación para los árboles binarios de búsqueda:
 - [x] Implementar la función para agregar un nodo al árbol binario de búsqueda en modo estático.
 
 #### Calcular Altura (Modo Estático)
-- [ ] Implementar la función que calcula la altura del árbol binario de búsqueda en modo estático.
+- [x] Implementar la función que calcula la altura del árbol binario de búsqueda en modo estático.
 
 #### Calcular Suma (Modo Estático)
 - [x] Implementar la función que calcula la suma de todos los nodos en el árbol en modo estático.
@@ -38,7 +38,7 @@ Existen dos modos de implementación para los árboles binarios de búsqueda:
 - [x] Implementar la función para agregar un nodo al árbol binario de búsqueda en modo dinámico.
 
 #### Calcular Altura (Modo Dinámico)
-- [ ] Implementar la función que calcula la altura del árbol binario de búsqueda en modo dinámico.
+- [x] Implementar la función que calcula la altura del árbol binario de búsqueda en modo dinámico.
 
 #### Calcular Suma (Modo Dinámico)
 - [x] Implementar la función que calcula la suma de todos los nodos en el árbol en modo dinámico.
