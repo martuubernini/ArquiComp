@@ -76,8 +76,12 @@ callCambiarModo:
 	cmp al, 1
 	je cambiarModo
 	mov al, 2
-	out 22, al	; Si hay error imprimo 2
-    jmp main
+	out 22, al	; Si hay error imprimo 2 y seteo todo otra vez
+	call inicializarEntradas
+	mov si, 0	
+	mov al, 0
+	mov [tope], al 	; seteo el tope en 0 otra vez
+	jmp main 
 
 
 ;Loop para inicializar la entrada con 0x8000
@@ -895,6 +899,6 @@ exit:
 
 	
 .ports ; Definicion de puertos
-20: 1,2,1,-1,5,-1,5,4,6,-1,244,-5,255
+20: 1, 0, 1, 1, 1, 5, 2, 5, 255
 ; 200: 1,2,3  ; Ejemplo puerto simple
 ; 201:(100h,10),(200h,3),(?,4)  ; Ejemplo puerto PDDV
