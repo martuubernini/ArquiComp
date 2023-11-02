@@ -86,7 +86,7 @@ callCambiarModo:
 
 ;Loop para inicializar la entrada con 0x8000
 loopInicializar: 
-	mov ES:[bx + si], 0x8000
+	mov ES:[si], 0x8000
 	add si, 2
 	jmp inicializarEntradas
 
@@ -147,11 +147,11 @@ AgregarNodoEstatico proc
 	pop ax
 		
 	mov cx, 0x8000
-	cmp ES:[bx + si], cx 	; me fijo si la posicion bx + si del arreglo es nula
+	cmp ES:[si], cx 	; me fijo si la posicion bx + si del arreglo es nula
 	jne recorrerEstatico	; si no lo es, busco recursivamente donde puedo encontrarlo
 
-	mov ES:[bx + si], ax	; si es nula y esta todo ok en regla, lo a�ado al arbol
-	mov ax, ES:[bx + si]
+	mov ES:[si], ax	; si es nula y esta todo ok en regla, lo a�ado al arbol
+	mov ax, ES:[si]
 	
 	mov ax, si
 	inc ax
@@ -170,7 +170,7 @@ AgregarNodoEstatico proc
 	jmp finCargarNodoEstatico	; the end
 	
 recorrerEstatico:			; dependiendo del valor de num, veo para q rama del arbol mandar (o mandar error)
-	cmp ax, ES:[bx + si]	
+	cmp ax, ES:[si]	
 	je errorNodoYaExiste	; si son iguales -> error, el nodo ya existe
 	jl recorrerIzqEstatico	; si es menor -> busco en la rama izquierda
 	jg recorrerDerEstatico	; si es mayor -> busco en la rama derecha
@@ -235,13 +235,13 @@ AgregarNodoDinamico proc
 	; Si no lo es ---> avanzo en el arbol buscando una posicion nula (o buscando error)
 
 	mov cx, 0x8000
-	cmp ES:[bx + si], cx 	; me fijo si la posicion bx + si del arreglo es nula
+	cmp ES:[si], cx 	; me fijo si la posicion bx + si del arreglo es nula
 	jne recorrerDinamico	; si no lo es, busco recursivamente donde puedo encontrarlo
 	je agregarNodo 		; si lo es, agrego el nodo y lisssto
 	
 
 recorrerDinamico:			;  dependiendo del valor de num, veo para q rama del arbol mandar (o mandar error)		
-	cmp ax, ES:[bx + si]	
+	cmp ax, ES:[si]	
 	je errorNodoYaExisteDin	; si son iguales -> error, el nodo ya existe
 	jl recorrerIzqDinamico	; si es menor -> busco en la rama izquierda
 	jg recorrerDerDinamico	; si es mayor -> busco en la rama derecha
@@ -249,7 +249,7 @@ recorrerDinamico:			;  dependiendo del valor de num, veo para q rama del arbol m
 recorrerIzqDinamico:							
 	add si,2	; me muevo a la izq
 
-	cmp ES:[bx + si],cx			; si el espacio es nulo, me mando para agregarlo
+	cmp ES:[si],cx			; si el espacio es nulo, me mando para agregarlo
 	je agregarNodo				
 
 	; si no lo es, sigo buscando por las ramas
@@ -257,11 +257,11 @@ recorrerIzqDinamico:
 	push ax 	; guardo ax
 	
 	; Hago la cuenta para que si = lo q dice arriba
-	mov ax, ES:[bx + si] 		 
-	mov si, ES:[bx + si]		 
+	mov ax, ES:[si] 		 
+	mov si, ES:[si]		 
 	shl si,1					; si = si * 2
 	add si,ax					; si = si * 2 + ax. Y ax= si --> si = si * 3
-	add si,si					; si = si * 3 + si * 3 = 6 * ES:[bx + si] * 6
+	add si,si					; si = si * 3 + si * 3 = 6 * ES:[si] * 6
 
 	pop ax		; recupero ax
 	call AgregarNodoDinamico
@@ -270,7 +270,7 @@ recorrerIzqDinamico:
 recorrerDerDinamico:		
 	add si,4	; me muevo a la der
 
-	cmp ES:[bx + si],cx			; si el espacio es nulo, me mando para agregarlo
+	cmp ES:[si],cx			; si el espacio es nulo, me mando para agregarlo
 	je agregarNodo				
 
 	; si no lo es, sigo buscando por las ramas
@@ -278,11 +278,11 @@ recorrerDerDinamico:
 	push ax 	; guardo ax
 	
 	; Hago la cuenta para que si = lo q dice arriba
-	mov ax, ES:[bx + si] 		 
-	mov si, ES:[bx + si]		 
+	mov ax, ES:[si] 		 
+	mov si, ES:[si]		 
 	shl si,1					; si = si * 2
 	add si,ax					; si = si * 2 + ax. Y ax= si --> si = si * 3
-	add si,si					; si = si * 3 + si * 3 = 6 * ES:[bx + si] * 6
+	add si,si					; si = si * 3 + si * 3 = 6 * ES:[si] * 6
 
 	pop ax		; recupero ax
 	call AgregarNodoDinamico
@@ -308,14 +308,14 @@ agregarNodo:
 	mov cx, 6
 	div cx
 	
-	mov	ES:[bx + si], ax 	; registro el nodo izq o der con la refencia al tope (donde se va a guardar el elemento
+	mov	ES:[si], ax 	; registro el nodo izq o der con la refencia al tope (donde se va a guardar el elemento
 	
 	mov cx, 0
 	pop ax	; recupero ax
 	
 	
 	mov si, [tope]			; hago que si apunte al tope (ahi agrego el nodo ax)
-	mov ES:[bx + si], ax	; a�ado el numero finalmente
+	mov ES:[si], ax	; a�ado el numero finalmente
 
 	mov ax, 6
 	add [tope], ax
@@ -351,29 +351,25 @@ callCalcularAlturaEstatico:
 	jmp main
 
 CalcularAlturaEstatico proc
-    ; Logica de calcular altura
-	; Veo si es null
-	
-	cmp ES:[bx + si], 0x8000
-	je finCalcularAlturaEstatico
+	cmp ES:[si], 0x8000		; Veo si es null
+	je finCalcularAlturaEstatico	; si es null -> para el final
 
-	push si
-
-	add si,si
+	push si							; guardo si, basicamente guardo donde estoy parada
+	add si,si						; me muevo al izquierdo
 	add si,2
 	
-	call CalcularAlturaEstatico
+	call CalcularAlturaEstatico		; llamo a calcular por la izquierda
 
-	pop si
-	push ax
+	pop si							; recupero si
+	push ax							; guardo el resultado del izquierdo
 
-	mov ax,0
-	add si,si
+	mov ax,0						; reinicio el contador
+	add si,si						; me muevo a la derecha
 	add si,4
 
-	call CalcularAlturaEstatico
-	pop cx
-
+	call CalcularAlturaEstatico		; llamo a calcular por la derecha
+	pop cx							; recupero la altura en la izquierda y lo guardo en cx
+	; Veo cual rama tiene mayor altura (cx = izquierda, ax = derecha)
 	cmp ax, cx
 	jl elijoMaxEstatico
 	add ax,1
@@ -404,13 +400,13 @@ CalcularAlturaDinamico proc
     ; Logica de calcular altura
 	; Veo si es null
 	
-	cmp ES:[bx + si], 0x8000
+	cmp ES:[si], 0x8000
 	je finCalcularAlturaDinamico
 
 	push si
 
 	add si, 2
-	mov si, ES:[bx + si]
+	mov si, ES:[si]
 	cmp si, 0x8000
 	je calcularDerecho
 	mov dx, si				; dx = si
@@ -427,7 +423,7 @@ calcularDerecho:
 	mov ax,0
 	
 	add si, 4
-	mov si, ES:[bx + si]
+	mov si, ES:[si]
 	cmp si, 0x8000
 	je comparacionMaximo
 	mov dx, si				; dx = si
@@ -489,7 +485,7 @@ CalcularSumaEstatico proc
 	cmp cx, ES:[bx+si]
 	je avanzarIndiceEstatico ; si es nulo, avanzo 2 y bueno, veo q onda
 
-	add dx, ES:[bx + si]
+	add dx, ES:[si]
 	jmp avanzarIndiceEstatico
 
 avanzarIndiceEstatico:
@@ -528,7 +524,7 @@ CalcularSumaDinamico proc
 	cmp cx, ES:[bx+si]
 	je avanzarIndiceDinamico ; si es nulo, avanzo 6 y bueno, veo q onda
 
-	add dx, ES:[bx + si]
+	add dx, ES:[si]
 	
 avanzarIndiceDinamico:
 	mov ax,si
@@ -585,7 +581,7 @@ callImprimirArbolEstaticoMayor:
 
 ImprimirArbolEstaticoMenor proc
 	; Logica de imprimir arbol
-	cmp ES:[bx + si], 0x8000
+	cmp ES:[si], 0x8000
 	je finImprimirArbolEstaticoMenor
 
 	; guardo la posicion del nodo
@@ -602,7 +598,7 @@ ImprimirArbolEstaticoMenor proc
 	pop si
 	
 	; imprimo el nodo
-	mov ax, ES:[bx + si]
+	mov ax, ES:[si]
 	out 21, ax
 
 	; me muevo a la rama derecha
@@ -620,7 +616,7 @@ ImprimirArbolEstaticoMenor endp
 
 ImprimirArbolEstaticoMayor proc
 	; Logica de imprimir arbol
-	cmp ES:[bx + si], 0x8000
+	cmp ES:[si], 0x8000
 	je finImprimirArbolEstaticoMayor
 
 	; guardo la posicion del nodo
@@ -637,7 +633,7 @@ ImprimirArbolEstaticoMayor proc
 	pop si
 	
 	; imprimo el nodo
-	mov ax, ES:[bx + si]
+	mov ax, ES:[si]
 	out 21, ax
 
 	; me muevo a la rama izquierda
@@ -686,7 +682,7 @@ callImprimirArbolDinamicoMayor:
 
 ImprimirArbolDinamicoMenor proc
 	; Logica de imprimir arbol
-	cmp ES:[bx + si], 0x8000
+	cmp ES:[si], 0x8000
 	je finImprimirArbolDinamicoMenor
 
 	; guardo la posicion del nodo
@@ -695,7 +691,7 @@ ImprimirArbolDinamicoMenor proc
 	; me muevo a la rama izquierda
 	; si no tengo nada para moverme, voy directo a imprimir el nodo
 	add si, 2
-	mov si, ES:[bx + si]
+	mov si, ES:[si]
 	cmp si, 0x8000
 	je imprimirNodoMenor
 
@@ -713,13 +709,13 @@ imprimirNodoMenor:
 	pop si
 	
 	; imprimo el nodo
-	mov ax, ES:[bx + si]
+	mov ax, ES:[si]
 	out 21, ax
 
 	; me muevo a la rama derecha
 	; si no tengo nada para moverme, voy directo al fin
 	add si, 4
-	mov si, ES:[bx + si]
+	mov si, ES:[si]
 	cmp si, 0x8000
 	je finImprimirArbolDinamicoMenor
 
@@ -740,7 +736,7 @@ ImprimirArbolDinamicoMenor endp
 
 ImprimirArbolDinamicoMayor proc
 	; Logica de imprimir arbol
-	cmp ES:[bx + si], 0x8000
+	cmp ES:[si], 0x8000
 	je finImprimirArbolDinamicoMayor
 
 	; guardo la posicion del nodo
@@ -749,7 +745,7 @@ ImprimirArbolDinamicoMayor proc
 	; me muevo a la rama derecha
 	; si no tengo nada para moverme, voy directo a imprimir el nodo
 	add si, 4
-	mov si, ES:[bx + si]
+	mov si, ES:[si]
 	cmp si, 0x8000
 	je imprimirNodoMayor
 
@@ -767,13 +763,13 @@ imprimirNodoMayor:
 	pop si
 	
 	; imprimo el nodo
-	mov ax, ES:[bx + si]
+	mov ax, ES:[si]
 	out 21, ax
 
 	; me muevo a la rama izquierda
 	; si no tengo nada para moverme, voy directo al fin
 	add si, 2
-	mov si, ES:[bx + si]
+	mov si, ES:[si]
 	cmp si, 0x8000
 	je finImprimirArbolDinamicoMayor
 
@@ -833,7 +829,7 @@ ImprimirMemoriaEstatico proc
 loopImprimirEstatico:
 	push ax
 
-	mov ax, ES:[bx + si]
+	mov ax, ES:[si]
 	out 21, ax
 	mov ax, si
 	add ax , 2
@@ -873,7 +869,7 @@ ImprimirMemoriaDinamico proc
 loopImprimirDinamico:
 	push ax
 
-	mov ax, ES:[bx + si]
+	mov ax, ES:[si]
 	out 21, ax
 	mov ax, si
 	add ax, 2
@@ -901,6 +897,6 @@ exit:
 
 	
 .ports ; Definicion de puertos
-20: 1,0,2,100,2,200,2,50,2,30,2,150,4,1,1,2,102,2,202,2,52,2,32,2,152,4,255
+20: 1,1,2,5,2,-5,2,-4,2,8,6,10,255
 ; 200: 1,2,3  ; Ejemplo puerto simple
 ; 201:(100h,10),(200h,3),(?,4)  ; Ejemplo puerto PDDV
