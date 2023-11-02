@@ -897,6 +897,6 @@ exit:
 
 	
 .ports ; Definicion de puertos
-20: 1,1,2,5,2,-5,2,-4,2,8,6,10,255
+20: 1,1,2,6,2,5,2,3,2,4,2,2,5,0,255
 ; 200: 1,2,3  ; Ejemplo puerto simple
 ; 201:(100h,10),(200h,3),(?,4)  ; Ejemplo puerto PDDV
