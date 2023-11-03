@@ -1,3 +1,6 @@
+// LAboratorio arquitectua de computadoras
+// Martina Bernini 5.041.130-6
+
 #include <stdio.h>
 #include <stdbool.h>
 
